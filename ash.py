@@ -66,11 +66,11 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.6'
+        self.version        = '1.0.7'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
-            latest = v.decode('utf-8').split('/')[-1][:-4]
+            latest = v.decode('utf-8').split('/')[2]
             file   = os.path.realpath(__file__)
             if latest != self.version:
                 print('Current Version ', self.version)
