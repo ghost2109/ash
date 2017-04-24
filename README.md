@@ -3,11 +3,58 @@ AWS (Amazon Web Services) Super Helper
 
 Ash is a console application which helps you connect to your amazon instances and databases.
 
-### Available commands 
+### Available commands  
+<pre>
 ssh         -- ssh to an ec2 instance.  
 sendfile    -- scp a file to an ec2 instance.  
 getfile     -- scp a file from an ec2 instance.  
 list        -- lists all instances or the can specify a name to search for.  
 db          -- creates an ssh tunnel to your ec2 instance and maps to a local port in the 10000 - 20000 then open mysql cli.  
 logs        -- dumps logs to the console from the ec2 instance  
-dockerlogs  -- lists running containers on an instance for you to select and run docker logs <instanceId>  
+docker      -- lists running containers on an instance for you to select and run docker commands instanceId 
+</pre>
+### Setup
+Download ash.py
+```
+curl https://raw.githubusercontent.com/ghost2109/ash/master/ash.py > ash.py && chmod +x ./ash.py
+```
+Command line options
+--config   | creates ~/.ash/ash.json
+--debug    | turns on error reporting and creates and error log file in the current directory
+--upgrade  | checks this repo for the latest version and gives you the option to upgrade to a new version
+
+### First time running ash you will need to configure it
+run ash
+```
+./ash.py
+```
+Type in config at the ash prompt press then space and hit tab twice to see the config options
+```
+(ASH /home/user/) 
+::) config <tab><tab>
+bucketRegion
+dbSecurityGpLabel
+dbuser
+logs
+pem
+s3Bucket
+sshSwitches
+sshUser    
+```
+To configure an option type in 
+```
+config<space><config option>
+```
+### Config options
+<pre>
+dbSecurityGpLabel | db | AWS security group name  
+bucketRegion      | db | AWS region for the DB connection ARN's and passwords file  
+sshSwitches       |    | Customs ssh switches to add example -oStrictHostKeyChecking=no  
+s3Bucket          | db | AWS bucketname for the DB connection ARN's and passwords file  
+sshUser           | R  | Default ssh username default is ec2-user  
+dbuser            | db | Read only database user  
+logs              |    | Log file locations to you with the logs command  
+pem               | R  | Location of the directory containing the aws instance pem files  
+</pre>
+R  -- required  
+db -- only need for db tunneling  
