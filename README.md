@@ -49,12 +49,19 @@ config<space><config option>
 <pre>
 dbSecurityGpLabel | db | AWS security group name  
 bucketRegion      | db | AWS region for the DB connection ARN's and passwords file  
-sshSwitches       |    | Customs ssh switches to add example -oStrictHostKeyChecking=no  
+sshSwitches       | o  | Customs ssh switches to add example -oStrictHostKeyChecking=no  
 s3Bucket          | db | AWS bucketname for the DB connection ARN's and passwords file  
-sshUser           | R  | Default ssh username default is ec2-user  
+sshUser           | r  | Default ssh username default is ec2-user  
 dbuser            | db | Read only database user  
-logs              |    | Log file locations to you with the logs command  
-pem               | R  | Location of the directory containing the aws instance pem files  
+logs              | o  | Log file locations to you with the logs command  
+pem               | r  | Location of the directory containing the aws instance pem files  
 </pre>
-R  -- required  
+r  -- required  
+o  -- optional
 db -- only need for db tunneling  
+
+After you have configured ash run update to get the instances to connect with.
+```
+(ASH /home/user/) 
+::) update
+```
