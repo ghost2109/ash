@@ -19,9 +19,9 @@ Download ash.py
 curl https://raw.githubusercontent.com/ghost2109/ash/master/ash.py > ash.py && chmod +x ./ash.py
 ```
 Command line options
---config   | creates ~/.ash/ash.json
---debug    | turns on error reporting and creates and error log file in the current directory
---upgrade  | checks this repo for the latest version and gives you the option to upgrade to a new version
+--config   | creates ~/.ash/ash.json  
+--debug    | turns on error reporting and creates and error log file in the current directory  
+--upgrade  | checks this repo for the latest version and gives you the option to upgrade to a new version  
 
 ### First time running ash you will need to configure it
 run ash
