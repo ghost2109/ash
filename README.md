@@ -59,7 +59,7 @@ pem               | r  | Location of the directory containing the aws instance p
 
 r  -- required  
 o  -- optional  
-db -- only need for db tunneling  
+db -- only needed for db tunneling  
 </pre>
 After you have configured ash run update to get the instances to connect with.
 ```
