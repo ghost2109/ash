@@ -56,11 +56,11 @@ sshUser           | r  | Default ssh username default is ec2-user
 dbuser            | db | Read only database user  
 logs              | o  | Log file locations to you with the logs command  
 pem               | r  | Location of the directory containing the aws instance pem files  
-</pre>
+
 r  -- required  
 o  -- optional  
 db -- only need for db tunneling  
-
+</pre>
 After you have configured ash run update to get the instances to connect with.
 ```
 (ASH /home/user/) 
