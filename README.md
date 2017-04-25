@@ -20,7 +20,7 @@ curl https://raw.githubusercontent.com/ghost2109/ash/master/ash.py > ash.py && c
 ```
 ### Command line options  
 <pre>
---config   | creates ~/.ash/ash.json  
+--config   | creates ash config directory / file ~/.ash/ash.json
 --debug    | turns on error reporting and creates and error log file in the current directory  
 --upgrade  | checks for the latest version and gives you the option to upgrade to a new version  
 </pre>
@@ -29,7 +29,7 @@ run ash
 ```
 ./ash.py
 ```
-Type in config at the ash prompt press then space and hit tab twice to see the config options
+Type in config at the ash prompt press space and hit tab twice to see the config options
 ```
 (ASH /home/user/) 
 ::) config <tab><tab>
