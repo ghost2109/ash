@@ -58,7 +58,7 @@ logs              | o  | Log file locations to you with the logs command
 pem               | r  | Location of the directory containing the aws instance pem files  
 </pre>
 r  -- required  
-o  -- optional
+o  -- optional  
 db -- only need for db tunneling  
 
 After you have configured ash run update to get the instances to connect with.
