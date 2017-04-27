@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.7'
+        self.version        = '1.0.8'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -411,7 +411,12 @@ ssh <name> -u <username> -- same as above with the specified username
         pip  = self._get_param('-i', line)
 
         ip = inst['pip'] if pip else inst['ip']
-
+        print("\n###########################")
+        print(" Connecting with...")
+        print(" USER "+ user)
+        print(" KEY: " + inst['key_name']+".pem")
+        print(" IP : " + ip)
+        print("###########################\n")
         sshcall = ['ssh', '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+ip, self.config['sshSwitches']]
         if '' in sshcall:
           sshcall.remove('')
