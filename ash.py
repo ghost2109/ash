@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.8'
+        self.version        = '1.0.9'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -86,11 +86,13 @@ class AwsConsole(Cmd):
             exit()
 
         # Ash config directory
-        self.configLocation = expanduser("~") + '/.ash/'  
+        self.configLocation = expanduser("~") + '/.ash/'
 
-        # Check if ash config file exists
-        if not os.path.exists(self.configLocation):
-            os.makedirs(self.configLocation)
+        # history file location
+        self.histfile       = self.configLocation + 'ash.history'
+
+        # history file size
+        self.histfile_size  = 1000  
 
         # configure config file and directory
         self._start_up()                                 
@@ -196,6 +198,20 @@ class AwsConsole(Cmd):
         # load config file into memory from the .ash directory
         with open(self.configLocation + 'ash.json') as data_file:    
           self.config = json.load(data_file)
+
+    @tbl
+    def preloop(self):
+        if readline and os.path.exists(self.histfile):
+            readline.read_history_file(self.histfile)
+        else:
+          f = open(self.histfile, 'w')
+          f.close()
+
+    @tbl
+    def postloop(self):
+        if readline:
+            readline.set_history_length(self.histfile_size)
+            readline.write_history_file(self.histfile)
 
     @tbl
     def _get_port(self):
@@ -607,21 +623,23 @@ db <name>                -- creates ssh tunnel to specified instance then starts
 db <name> -u <username>  -- change default ssh username 
 db <name> -c             -- creates ssh tunnel and runs mysql client
 db <name> -p <port>      -- creates ssh tunnel with the specified port
+db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
         """
-        localport = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port()
-        inst      = self._get_inst(line)
-        user      = self._get_param('-u', line, default=self.config['sshUser'])
-        cmd       = self._get_param('-c', line)
+        localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port()
+        remoteport  = self._get_param('-rp', line) if self._get_param('-rp', line) else 3306
+        inst        = self._get_inst(line)
+        user        = self._get_param('-u', line, default=self.config['sshUser'])
+        cmd         = self._get_param('-c', line)
 
         self.config['tunnel'] = json.loads(self._getConfigFile('locker/readonly.json'))      
-        sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':'+inst['dbEndpoint']+':3306', '-N']
+        sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':'+inst['dbEndpoint']+':'+str(remoteport), '-N']
         if '' in sshcall:
           sshcall.remove('')      
         tunnel = Popen(sshcall)
 
         if isinstance(tunnel.pid, int):
           call(['clear'])
-          print("database tunnel to ", inst['dbEndpoint'], 'on port ', localport, '\n', 'user is '+self.config['dbuser']+' and the password is',self.config['tunnel'][inst['dbEndpoint']])
+          print("database tunnel to ", inst['dbEndpoint'], 'on port ', localport, '\n', 'user is '+self.config['dbuser']+' and the password is',self.config['tunnel'][inst['dbEndpoint']]+"\nRemote port: "+ str(remoteport))
           time.sleep(1)
           if cmd:
             sshcall = ['mysql', '-h', '127.0.0.1', '--port='+localport, '-u',self.config['dbuser'], '-p'+self.config['tunnel'][inst['dbEndpoint']] ]
@@ -665,6 +683,7 @@ flush                    -- removes instance config files from filesystem
           if self.config[file] != []:
                 with open(target, 'w') as f:
                   json.dump(self.config[file], f)
+        self.postloop()
         if exit:
           sys.exit()
     
@@ -688,6 +707,7 @@ exit
         call(['clear'])
         print(self.intro)
         while True: 
+            self.preloop()
             self.intro = ''
             try:
                 super(AwsConsole, self).cmdloop()
