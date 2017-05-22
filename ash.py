@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.10'
+        self.version        = '1.0.11'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -615,6 +615,26 @@ getfile <name>            -- aws ec2 tag name
         """Auto complete for getfile function"""
         return self._complete(text, line, begidx, endidx, self.config['names'])
     
+    @tbl
+    def do_console(self, line):
+        """
+get file from an aws instance
+usage:
+console <name>            -- Get EC2 instance console output
+        """
+        inst  = self._get_inst(line, split=True)
+
+        boto_session3 = boto3.session.Session()
+        ec2    = boto_session3.client('ec2', region_name=inst['region'])
+
+        stdOut = ec2.get_console_output(InstanceId=inst['id'])
+        print(stdOut['Output'])
+    
+    @tbl               
+    def complete_console(self, text, line, begidx, endidx):
+        """Auto complete for getfile function"""
+        return self._complete(text, line, begidx, endidx, self.config['names'])
+
     @tbl
     def do_db(self, line):
         """
