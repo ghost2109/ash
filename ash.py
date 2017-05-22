@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.9'
+        self.version        = '1.0.10'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -313,6 +313,7 @@ class AwsConsole(Cmd):
                 tmp['id']       = j.instance_id
                 tmp['sg']       = j.security_groups
                 tmp['region']   = region
+                tmp['dbEndpoint'] = []
                 for sg in j.security_groups:
                       if self.config['dbSecurityGpLabel'] in sg['GroupName']:
                         sgid = client.describe_security_groups(
@@ -324,7 +325,7 @@ class AwsConsole(Cmd):
                                 if len(db['VpcSecurityGroups']) > 0:
                                       for id, item in enumerate(db['VpcSecurityGroups']):
                                         if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
-                                              tmp['dbEndpoint']      = db['Endpoint']['Address']
+                                              tmp['dbEndpoint'].append(db['Endpoint']['Address'])
                                 
                 for tag in j.tags:            
                       if tag['Key'] == 'Name': tmp['name'] = tag['Value']                                 
@@ -631,18 +632,41 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
         user        = self._get_param('-u', line, default=self.config['sshUser'])
         cmd         = self._get_param('-c', line)
 
-        self.config['tunnel'] = json.loads(self._getConfigFile('locker/readonly.json'))      
-        sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':'+inst['dbEndpoint']+':'+str(remoteport), '-N']
+        if len(inst['dbEndpoint']) > 1:
+          for idx, i in enumerate(inst['dbEndpoint']):
+            print(idx, i)
+
+          endpoint = inst['dbEndpoint'][int(input("Please select a db [ 0 - "+ str(len(inst['dbEndpoint'])-1)+" ] : "  ))]
+        else:
+          endpoint = inst['dbEndpoint'][0]
+
+        self.config['tunnel'] = json.loads(self._getConfigFile('locker/readonly2.json'))
+
+        dbLt = endpoint.split('.')[0].split('-')
+        if len(dbLt) == 3:
+          if 'ea' in dbLt[2]:
+            env = 'ea'
+          elif 'qa' in dbLt[2]:
+            env = 'qa'
+          else:
+            env = 'prod'
+
+          passwd = self.config['tunnel'][dbLt[0]][dbLt[1]][env]
+        
+        else:
+          passwd = self.config['tunnel'][dbLt[0]]
+
+        sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':'+endpoint+':'+str(remoteport), '-N']
         if '' in sshcall:
           sshcall.remove('')      
         tunnel = Popen(sshcall)
 
         if isinstance(tunnel.pid, int):
           call(['clear'])
-          print("database tunnel to ", inst['dbEndpoint'], 'on port ', localport, '\n', 'user is '+self.config['dbuser']+' and the password is',self.config['tunnel'][inst['dbEndpoint']]+"\nRemote port: "+ str(remoteport))
+          print("database tunnel to ", endpoint, 'on port ', localport, '\n', 'user is '+self.config['dbuser']+' and the password is',passwd+"\nRemote port: "+ str(remoteport))
           time.sleep(1)
           if cmd:
-            sshcall = ['mysql', '-h', '127.0.0.1', '--port='+localport, '-u',self.config['dbuser'], '-p'+self.config['tunnel'][inst['dbEndpoint']] ]
+            sshcall = ['mysql', '-h', '127.0.0.1', '--port='+localport, '-u',self.config['dbuser'], '-p'+passwd ]
             if '' in sshcall:
               sshcall.remove('')
             mysql = Popen(sshcall)
