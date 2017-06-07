@@ -303,29 +303,35 @@ class AwsConsole(Cmd):
                     iface = 1
                   else:
                     iface = 0
-                  tmp['pip']    = j.network_interfaces_attribute[iface]['PrivateIpAddress']
-                  tmp['ip']     = j.network_interfaces_attribute[iface]['Association']['PublicIp']
+                  tmp['pip']      = j.network_interfaces_attribute[iface]['PrivateIpAddress']
+                  tmp['ip']       = j.network_interfaces_attribute[iface]['Association']['PublicIp']
                 else:
                   tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address       
                   tmp['pip']      = j.private_ip_address  
 
-                tmp['key_name'] = j.key_name
-                tmp['id']       = j.instance_id
-                tmp['sg']       = j.security_groups
-                tmp['region']   = region
+                tmp['key_name']   = j.key_name
+                tmp['id']         = j.instance_id
+                tmp['sg']         = j.security_groups
+                tmp['region']     = region
                 tmp['dbEndpoint'] = []
                 for sg in j.security_groups:
-                      if self.config['dbSecurityGpLabel'] in sg['GroupName']:
-                        sgid = client.describe_security_groups(
-                              Filters=[{'Name': 'ip-permission.group-id',
-                              'Values': [sg['GroupId']]}])['SecurityGroups']
-                        if len(sgid) > 0:
-                              check = sgid[0]['GroupId']
-                              for db in rds:
-                                if len(db['VpcSecurityGroups']) > 0:
-                                      for id, item in enumerate(db['VpcSecurityGroups']):
-                                        if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
-                                              tmp['dbEndpoint'].append(db['Endpoint']['Address'])
+                  if self.config['dbSecurityGpLabel'] in sg['GroupName']:
+                    sgid = client.describe_security_groups(
+                          Filters=[{'Name': 'ip-permission.group-id',
+                          'Values': [sg['GroupId']]}])['SecurityGroups']
+                    if len(sgid) > 0:
+                      for grp in sgid:
+
+                        if '-rds-' in grp['GroupName']:
+                          print(grp['GroupName'])
+                          check = grp['GroupId']
+                        else:
+                          check = ''
+                      for db in rds:
+                        if len(db['VpcSecurityGroups']) > 0:
+                              for id, item in enumerate(db['VpcSecurityGroups']):
+                                if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
+                                      tmp['dbEndpoint'].append(db['Endpoint']['Address'])
                                 
                 for tag in j.tags:            
                       if tag['Key'] == 'Name': tmp['name'] = tag['Value']                                 
@@ -345,6 +351,7 @@ class AwsConsole(Cmd):
         t = threading.Thread(target=self._load, args=(region,))
         t.start()
       print("\n")
+      time.sleep(0.1)
       l=['-', '/', '|', '\\']
       i=3
       while threading.activeCount() > 1:
@@ -411,8 +418,13 @@ list <search>            -- lists all instances that contain the search term
                 print(i['name'], i['ip'], i['dbEndpoint'])
         else:
           for i in self.config['instances']:
-                if line in i['name']:
+                if line.split(':')[0] in i['name']:
                   print(i['name'], i['ip'], i['dbEndpoint'])
+
+    @tbl
+    def complete_list(self, text, line, begidx, endidx):
+        """Auto complete for ssh function"""
+        return self._complete(text, line, begidx, endidx, self.config['names'])
     
     @tbl
     def do_ssh(self, line):
@@ -564,7 +576,7 @@ send file to an aws instance
 usage:
 sendfile <name>           -- aws ec2 tag name
                 -u <username>     -- change default ssh username
-                -f <path to file> -- loaction including file name
+                -f <path to file> -- location including file name
                 -d <ServerDir>    -- upload directory        (Default: ~/)
         """
         user  = self._get_param('-u', line, default=self.config['sshUser'])
@@ -578,7 +590,7 @@ sendfile <name>           -- aws ec2 tag name
 
         error = call(sshcall)
         call(['clear'])
-        if error == 0: print("Sent file ", file, 'to loaction: ', todir )
+        if error == 0: print("Sent file ", file, 'to location: ', todir )
 
     @tbl
     def complete_sendfile(self, text, line, begidx, endidx):
@@ -592,7 +604,7 @@ get file from an aws instance
 usage:
 getfile <name>            -- aws ec2 tag name
                 -u <username>     -- change default ssh username 
-                -f <path to file> -- loaction including file name
+                -f <path to file> -- location including file name
                 -d <localDir>   -- download directory      (Default: ./)
         """
         user  = self._get_param('-u', line, default='ec2-user')
@@ -607,7 +619,7 @@ getfile <name>            -- aws ec2 tag name
         error = call(sshcall)
         call(['clear'])
         if error == 0:
-          print("Received file ", file, 'loaction: ', todir )
+          print("Received file ", file, 'location: ', todir )
           self.do_ls()
     
     @tbl               
