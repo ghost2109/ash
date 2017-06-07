@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.14'
+        self.version        = '1.0.15'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -323,7 +323,6 @@ class AwsConsole(Cmd):
                       for grp in sgid:
 
                         if '-rds-' in grp['GroupName']:
-                          print(grp['GroupName'])
                           check = grp['GroupId']
                         else:
                           check = ''
