@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.15'
+        self.version        = '1.0.16'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -321,16 +321,16 @@ class AwsConsole(Cmd):
                           'Values': [sg['GroupId']]}])['SecurityGroups']
                     if len(sgid) > 0:
                       for grp in sgid:
-
                         if '-rds-' in grp['GroupName']:
                           check = grp['GroupId']
+                          for db in rds:
+                            if len(db['VpcSecurityGroups']) > 0:
+                                  for id, item in enumerate(db['VpcSecurityGroups']):
+                                    if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
+                                          tmp['dbEndpoint'].append(db['Endpoint']['Address'])
                         else:
-                          check = ''
-                      for db in rds:
-                        if len(db['VpcSecurityGroups']) > 0:
-                              for id, item in enumerate(db['VpcSecurityGroups']):
-                                if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
-                                      tmp['dbEndpoint'].append(db['Endpoint']['Address'])
+                          continue
+                      
                                 
                 for tag in j.tags:            
                       if tag['Key'] == 'Name': tmp['name'] = tag['Value']                                 
