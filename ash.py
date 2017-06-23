@@ -66,7 +66,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.16'
+        self.version        = '1.0.17'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -674,7 +674,7 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
         self.config['tunnel'] = json.loads(self._getConfigFile('locker/readonly2.json'))
 
         dbLt = endpoint.split('.')[0].split('-')
-        if len(dbLt) == 3:
+        if len(dbLt) >= 3:
           if 'ea' in dbLt[2]:
             env = 'ea'
           elif 'qa' in dbLt[2]:
