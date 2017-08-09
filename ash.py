@@ -56,7 +56,8 @@ def tbl(function):
           return function(*args, **kwargs)
       except Exception as error:
           if '--debug' in sys.argv:
-              print("Function " + function.__name__ + " returned an error: " + error.args[0])
+              print("Function " + function.__name__ + " returned an error: " + error.args[0] + str(error))
+              print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
               log('Python ERROR ' "Function " + function.__name__ + " returned an error: " + error.args[0])
   return wrapper
 
@@ -66,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version        = '1.0.17'
+        self.version = '1.1.0'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -89,40 +90,40 @@ class AwsConsole(Cmd):
         self.configLocation = expanduser("~") + '/.ash/'
 
         # history file location
-        self.histfile       = self.configLocation + 'ash.history'
+        self.histfile = self.configLocation + 'ash.history'
 
         # history file size
-        self.histfile_size  = 1000  
+        self.histfile_size = 1000
 
         # configure config file and directory
-        self._start_up()                                 
-        
+        self._start_up()
+
         # List for instance data arrays
-        self.config['instances'] = []  
+        self.config['instances'] = []
 
         # list for name to tab complete
-        self.config['names']     = []  
+        self.config['names'] = []
 
-        # list for names to tab complete db access                   
-        self.config['db']        = []             
+        # list for names to tab complete db access
+        self.config['db'] = []
 
-        # File names to load on start and to save on exit        
-        self.config['files'] = ['instances','names','db']
+        # File names to load on start and to save on exit
+        self.config['files'] = ['instances', 'names', 'db']
 
-        # Auto complete list for config command 
-        self.config['configOpts'] = ['pem', 'sshUser', 'sshSwitches', 'logs', 'dbSecurityGpLabel', 'dbuser', 's3Bucket', 'bucketRegion'] 
-        
-        # Hidden methods (don't display in help or auto complete)  
-        self.__hiden_methods = ('do_EOF','_load')         
+        # Auto complete list for config command
+        self.config['configOpts'] = ['pem', 'sshUser', 'sshSwitches', 'logs', 'dbSecurityGpLabel', 'dbuser', 's3Bucket', 'bucketRegion']
+
+        # Hidden methods (don't display in help or auto complete)
+        self.__hiden_methods = ('do_EOF', '_load')
 
         # Misc header not used
-        self.misc_header  = ''
+        self.misc_header = ''
 
         # if no Doc string don't display in help menu
-        self.undoc_header = None                          
+        self.undoc_header = None
 
         # Standard prompt for ash
-        self.prompt = "(ASH " + os.getcwd() +") \n::) "
+        self.prompt = "(ASH " + os.getcwd() + ") \n::) "
 
         # Help header
         self.doc_header = 'type ? <command> for usage:\nNB: you can use <tab> to auto complete'
@@ -214,9 +215,9 @@ class AwsConsole(Cmd):
             readline.write_history_file(self.histfile)
 
     @tbl
-    def _get_port(self):
+    def _get_port(self, portRange):
         """Returns a port thats not in use for the db function"""
-        ports = range(10000,11000)
+        ports = range(portRange[0], portRange[1])
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         for port in ports:
           if sock.connect_ex(('127.0.0.1', port)) != 0:
@@ -291,7 +292,6 @@ class AwsConsole(Cmd):
         client = boto_session3.client(  'ec2', region_name=region)
         rds    = boto_session3.client(  'rds', region_name=region).describe_db_instances()['DBInstances'] 
         all_instances = ec2.instances.all()
-        returnlist = []
         tmp        = {}
         for j in all_instances.page_size(5):
               if j.state['Name'] == "running":
@@ -314,6 +314,7 @@ class AwsConsole(Cmd):
                 tmp['sg']         = j.security_groups
                 tmp['region']     = region
                 tmp['dbEndpoint'] = []
+                tmp['launchTime'] = str(j.launch_time)
                 for sg in j.security_groups:
                   if self.config['dbSecurityGpLabel'] in sg['GroupName']:
                     sgid = client.describe_security_groups(
@@ -424,7 +425,30 @@ list <search>            -- lists all instances that contain the search term
     def complete_list(self, text, line, begidx, endidx):
         """Auto complete for ssh function"""
         return self._complete(text, line, begidx, endidx, self.config['names'])
-    
+
+    def do_launched(self, line):
+        """
+List instances with ip and db endpoint.
+Usage: 
+launch                     -- lists all instances
+launch <search>            -- lists all instances that contain the search term
+        """
+        if self.config['instances'] == []:
+            print("you need to run update") 
+        if line == '':  
+          for i in self.config['instances']:        
+              print(i['launchTime'], i['name'], i['ip'])
+        else:
+          for i in self.config['instances']:
+                if line.split(':')[0] in i['name']:
+                    print(i['launchTime'], i['name'], i['ip'], i['launchTime'])
+
+    @tbl
+    def complete_launched(self, text, line, begidx, endidx):
+        """Auto complete for ssh function"""
+        return self._complete(text, line, begidx, endidx, self.config['names']).sort()
+
+
     @tbl
     def do_ssh(self, line):
         """
@@ -620,12 +644,12 @@ getfile <name>            -- aws ec2 tag name
         if error == 0:
           print("Received file ", file, 'location: ', todir )
           self.do_ls()
-    
-    @tbl               
+
+    @tbl     
     def complete_getfile(self, text, line, begidx, endidx):
         """Auto complete for getfile function"""
         return self._complete(text, line, begidx, endidx, self.config['names'])
-    
+
     @tbl
     def do_console(self, line):
         """
@@ -657,7 +681,7 @@ db <name> -c             -- creates ssh tunnel and runs mysql client
 db <name> -p <port>      -- creates ssh tunnel with the specified port
 db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
         """
-        localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port()
+        localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port((10000, 11000))
         remoteport  = self._get_param('-rp', line) if self._get_param('-rp', line) else 3306
         inst        = self._get_inst(line)
         user        = self._get_param('-u', line, default=self.config['sshUser'])
@@ -711,6 +735,34 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
     def complete_db(self, text, line, begidx, endidx):
         """Auto complete for db function"""
         return self._complete(text, line, begidx, endidx, self.config['db'])
+
+    @tbl
+    def do_glowroot(self, line):
+        """
+Tunnel to Database
+Usage:
+db <name>                -- creates ssh tunnel to specified instance to map glowroot to localhost
+db <name> -u <username>  -- change default ssh tunnel username 
+db <name> -p <port>      -- creates ssh tunnel with the specified port
+        """
+        localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port((39000, 39999))
+        inst        = self._get_inst(line, split=True)
+        user        = self._get_param('-u', line, default=self.config['sshUser'])
+        
+        sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':localhost:4000', '-N']
+        if '' in sshcall:
+          sshcall.remove('')      
+        tunnel = Popen(sshcall)
+        call(['clear'])
+        print("glowroot tunnel to ", inst['name'], 'on port ', str(localport))
+        print("http://localhost:" + str(localport))
+        input("Press Enter to close the tunnel")
+        tunnel.kill()
+  
+    @tbl
+    def complete_glowroot(self, text, line, begidx, endidx):
+        """Auto complete for db function"""
+        return self._complete(text, line, begidx, endidx, self.config['names'])
 
     @tbl
     def do_flush(self, line):
