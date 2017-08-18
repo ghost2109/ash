@@ -57,7 +57,7 @@ def tbl(function):
       except Exception as error:
           if '--debug' in sys.argv:
               print("Function " + function.__name__ + " returned an error: " + error.args[0] + str(error))
-              print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(e).__name__, e)
+              print('Error on line {}'.format(sys.exc_info()[-1].tb_lineno), type(error).__name__, error)
               log('Python ERROR ' "Function " + function.__name__ + " returned an error: " + error.args[0])
   return wrapper
 
@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.1.0'
+        self.version = '1.1.1'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
