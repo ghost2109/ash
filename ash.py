@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.1.1'
+        self.version = '1.1.2'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -294,53 +294,71 @@ class AwsConsole(Cmd):
         all_instances = ec2.instances.all()
         tmp        = {}
         for j in all_instances.page_size(5):
-              if j.state['Name'] == "running":
-                #print(len(j.network_interfaces_attribute))
-                if len(j.network_interfaces_attribute) > 1:
-                  #print(j.network_interfaces_attribute[0]['PrivateIpAddress'])
-                  #print(j.network_interfaces_attribute[0]['Association']['PublicIp'])
-                  if j.network_interfaces_attribute[0]['PrivateIpAddress'] == j.private_ip_address:
-                    iface = 1
-                  else:
-                    iface = 0
-                  tmp['pip']      = j.network_interfaces_attribute[iface]['PrivateIpAddress']
-                  tmp['ip']       = j.network_interfaces_attribute[iface]['Association']['PublicIp']
-                else:
-                  tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address       
-                  tmp['pip']      = j.private_ip_address  
+          if j.state['Name'] == "running":
+            #print(len(j.network_interfaces_attribute))
 
-                tmp['key_name']   = j.key_name
-                tmp['id']         = j.instance_id
-                tmp['sg']         = j.security_groups
-                tmp['region']     = region
-                tmp['dbEndpoint'] = []
-                tmp['launchTime'] = str(j.launch_time)
-                for sg in j.security_groups:
-                  if self.config['dbSecurityGpLabel'] in sg['GroupName']:
-                    sgid = client.describe_security_groups(
+            tmp['key_name']   = j.key_name
+            tmp['id']         = j.instance_id
+            tmp['sg']         = j.security_groups
+            tmp['region']     = region
+            tmp['dbEndpoint'] = []
+            tmp['launchTime'] = str(j.launch_time)
+            
+
+            if len(j.network_interfaces_attribute) > 1:
+              #print(j.network_interfaces_attribute[0]['PrivateIpAddress'])
+              #print(j.network_interfaces_attribute[0]['Association']['PublicIp'])
+              if j.network_interfaces_attribute[0]['PrivateIpAddress'] == j.private_ip_address:
+                iface = 1
+              else:
+                iface = 0
+              tmp['pip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
+              
+              if 'PublicIp' in j.network_interfaces_attribute[iface].keys():
+                tmp['ip']       = j.network_interfaces_attribute[iface]['PublicIp']
+              else:
+                tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
+            
+            else:
+                tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address       
+                tmp['pip']      = j.private_ip_address  
+
+            for sg in j.security_groups:
+              if self.config['dbSecurityGpLabel'] in sg['GroupName']:
+                sgid = client.describe_security_groups(
                           Filters=[{'Name': 'ip-permission.group-id',
                           'Values': [sg['GroupId']]}])['SecurityGroups']
-                    if len(sgid) > 0:
-                      for grp in sgid:
-                        if '-rds-' in grp['GroupName']:
-                          check = grp['GroupId']
-                          for db in rds:
-                            if len(db['VpcSecurityGroups']) > 0:
-                                  for id, item in enumerate(db['VpcSecurityGroups']):
-                                    if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
-                                          tmp['dbEndpoint'].append(db['Endpoint']['Address'])
-                        else:
-                          continue
+                if len(sgid) > 0:
+                  for grp in sgid:
+                    if '-rds-' in grp['GroupName']:
+                      check = grp['GroupId']
+                      for db in rds:
+                        if len(db['VpcSecurityGroups']) > 0:
+                          for id, item in enumerate(db['VpcSecurityGroups']):
+                            if db['VpcSecurityGroups'][id]['VpcSecurityGroupId'] == check:
+                              tmp['dbEndpoint'].append(db['Endpoint']['Address'])
+                    else:
+                      continue
                       
-                                
-                for tag in j.tags:            
-                      if tag['Key'] == 'Name': tmp['name'] = tag['Value']                                 
-                if 'name' not in tmp: tmp['name'] = ''    
-                if 'dbEndpoint' not in tmp: tmp['dbEndpoint'] = ''   
-                if tmp['dbEndpoint'] != '': self.config['db'].append(tmp['name'])
+                              
+            for tag in j.tags:            
+              if tag['Key'] == 'Name': 
+                tmp['name'] = tag['Value']
+            if 'name' not in tmp: tmp['name'] = ''    
+            if 'dbEndpoint' not in tmp: tmp['dbEndpoint'] = []   
+            if tmp['dbEndpoint'] != []: self.config['db'].append(tmp['name'])
 
-                self.config['names'].append(tmp['name']+':'+tmp['ip'])
-                self.config['instances'].append(tmp.copy())
+            self.config['names'].append(tmp['name']+':'+tmp['ip'])
+            self.config['instances'].append(tmp.copy())
+            tmp['name']       = ''
+            tmp['key_name']   = ''
+            tmp['id']         = ''
+            tmp['sg']         = ''
+            tmp['region']     = ''
+            tmp['dbEndpoint'] = []
+            tmp['launchTime'] = ''
+            tmp['ip']         = ''
+            tmp['pip']        = ''
 
         return 0
    
@@ -376,7 +394,7 @@ update <region>          -- updates the specified region
           self._update([line])
         self.prompt = "(ASH " + os.getcwd() +") \n::) "
         self.save_maybe_exit()
-        call(['clear'])
+        #call(['clear'])
         print("Updated instance list")
 
     @tbl
