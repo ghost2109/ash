@@ -295,7 +295,6 @@ class AwsConsole(Cmd):
         tmp        = {}
         for j in all_instances.page_size(5):
           if j.state['Name'] == "running":
-            #print(len(j.network_interfaces_attribute))
 
             tmp['key_name']   = j.key_name
             tmp['id']         = j.instance_id
@@ -306,19 +305,24 @@ class AwsConsole(Cmd):
             
 
             if len(j.network_interfaces_attribute) > 1:
-              #print(j.network_interfaces_attribute[0]['PrivateIpAddress'])
-              #print(j.network_interfaces_attribute[0]['Association']['PublicIp'])
               if j.network_interfaces_attribute[0]['PrivateIpAddress'] == j.private_ip_address:
                 iface = 1
               else:
                 iface = 0
               tmp['pip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
+
+              if j.public_ip_address != None:
+                try:
+                  if 'Association' in j.network_interfaces_attribute[iface].keys():
+                    if 'PublicIp' in j.network_interfaces_attribute[iface]['Association'].keys():
+                      tmp['ip']       = j.network_interfaces_attribute[iface]['Association']['PublicIp']
+                    else:
+                      tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
+                except Exception as Error:
+                  tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
               
-              if 'PublicIp' in j.network_interfaces_attribute[iface].keys():
-                tmp['ip']       = j.network_interfaces_attribute[iface]['PublicIp']
               else:
-                tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
-            
+                 tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
             else:
                 tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address       
                 tmp['pip']      = j.private_ip_address  
@@ -339,11 +343,11 @@ class AwsConsole(Cmd):
                               tmp['dbEndpoint'].append(db['Endpoint']['Address'])
                     else:
                       continue
-                      
-                              
+                    
             for tag in j.tags:            
               if tag['Key'] == 'Name': 
                 tmp['name'] = tag['Value']
+            #print(tmp['name'], tmp['ip'])
             if 'name' not in tmp: tmp['name'] = ''    
             if 'dbEndpoint' not in tmp: tmp['dbEndpoint'] = []   
             if tmp['dbEndpoint'] != []: self.config['db'].append(tmp['name'])
