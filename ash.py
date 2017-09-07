@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.1.2'
+        self.version = '1.1.3'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -267,7 +267,7 @@ class AwsConsole(Cmd):
         else:
           readline.set_completer_delims(" ")
           completions = [ name for name in completelist if name.startswith(text) ]
-          completions.sort()
+          completions = completions.sort()
         return completions
 
     @tbl
@@ -437,11 +437,11 @@ list <search>            -- lists all instances that contain the search term
           print("you need to run update") 
         if line == '':  
           for i in self.config['instances']:        
-                print(i['name'], i['ip'], i['dbEndpoint'])
+                print('{:<30} {:<20} {:<20}{}'.format(i['name'], i['ip'], i['pip'], i['dbEndpoint']))
         else:
           for i in self.config['instances']:
                 if line.split(':')[0] in i['name']:
-                  print(i['name'], i['ip'], i['dbEndpoint'])
+                  print('{:<30} {:<20} {:<20}{}'.format(i['name'], i['ip'], i['pip'], i['dbEndpoint']))
 
     @tbl
     def complete_list(self, text, line, begidx, endidx):
