@@ -267,7 +267,7 @@ class AwsConsole(Cmd):
         else:
           readline.set_completer_delims(" ")
           completions = [ name for name in completelist if name.startswith(text) ]
-          completions = completions.sort()
+          completions.sort()
         return completions
 
     @tbl
