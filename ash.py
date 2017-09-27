@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.1.3'
+        self.version = '1.2.3'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -130,17 +130,17 @@ class AwsConsole(Cmd):
 
         # Header displayed at start up only
         self.intro  = """
-    ___        ______    ____  _   _ ____  _____ ____    _   _ _____ _     ____  _____ ____  
-   / \ \      / / ___|  / ___|| | | |  _ \| ____|  _ \  | | | | ____| |   |  _ \| ____|  _ \ 
+    ___        ______    ____  _   _ ____  _____ ____    _   _ _____ _     ____  _____ ____
+   / \ \      / / ___|  / ___|| | | |  _ \| ____|  _ \  | | | | ____| |   |  _ \| ____|  _ \
   / _ \ \ /\ / /\___ \  \___ \| | | | |_) |  _| | |_) | | |_| |  _| | |   | |_) |  _| | |_) |
- / ___ \ V  V /  ___) |  ___) | |_| |  __/| |___|  _ <  |  _  | |___| |___|  __/| |___|  _ < 
+ / ___ \ V  V /  ___) |  ___) | |_| |  __/| |___|  _ <  |  _  | |___| |___|  __/| |___|  _ <
 /_/   \_\_/\_/  |____/  |____/ \___/|_|   |_____|_| \_\ |_| |_|_____|_____|_|   |_____|_| \_\
-"""   
+"""
 
         super(AwsConsole, self).__init__()
         # Load instances from config files prompts for update if empty
-        self._load_instances()                           
-        
+        self._load_instances()
+
     @tbl
     def print_topics(self, header, cmds, cmdlen, maxcol):
         """Hide functions by putting them in self.__hiden_methods"""
@@ -152,7 +152,7 @@ class AwsConsole(Cmd):
         """overides get_names from cmd.Cmd module"""
         return [n for n in dir(self.__class__) if n not in self.__hiden_methods]
 
-    @tbl    
+    @tbl
     def do_version(self, line):
       print(self.version)
 
@@ -168,7 +168,7 @@ class AwsConsole(Cmd):
                     "sshSwitches" : "",
                     "dbuser"  : "readonly",
                     "logs" : [
-                              "/var/log/messages", 
+                              "/var/log/messages",
                               "/var/log/dmesg"
                               ],
                     "regions": [
@@ -197,7 +197,7 @@ class AwsConsole(Cmd):
                 exit("run ash with --config option")
 
         # load config file into memory from the .ash directory
-        with open(self.configLocation + 'ash.json') as data_file:    
+        with open(self.configLocation + 'ash.json') as data_file:
           self.config = json.load(data_file)
 
     @tbl
@@ -290,7 +290,7 @@ class AwsConsole(Cmd):
         boto_session3 = boto3.session.Session()
         ec2    = boto_session3.resource('ec2', region_name=region)
         client = boto_session3.client(  'ec2', region_name=region)
-        rds    = boto_session3.client(  'rds', region_name=region).describe_db_instances()['DBInstances'] 
+        rds    = boto_session3.client(  'rds', region_name=region).describe_db_instances()['DBInstances']
         all_instances = ec2.instances.all()
         tmp        = {}
         for j in all_instances.page_size(5):
@@ -302,7 +302,7 @@ class AwsConsole(Cmd):
             tmp['region']     = region
             tmp['dbEndpoint'] = []
             tmp['launchTime'] = str(j.launch_time)
-            
+
 
             if len(j.network_interfaces_attribute) > 1:
               if j.network_interfaces_attribute[0]['PrivateIpAddress'] == j.private_ip_address:
@@ -320,12 +320,12 @@ class AwsConsole(Cmd):
                       tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
                 except Exception as Error:
                   tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
-              
+
               else:
                  tmp['ip'] = j.network_interfaces_attribute[iface]['PrivateIpAddress']
             else:
-                tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address       
-                tmp['pip']      = j.private_ip_address  
+                tmp['ip']       = j.public_ip_address if j.public_ip_address != None else j.private_ip_address
+                tmp['pip']      = j.private_ip_address
 
             for sg in j.security_groups:
               if self.config['dbSecurityGpLabel'] in sg['GroupName']:
@@ -343,13 +343,13 @@ class AwsConsole(Cmd):
                               tmp['dbEndpoint'].append(db['Endpoint']['Address'])
                     else:
                       continue
-                    
-            for tag in j.tags:            
-              if tag['Key'] == 'Name': 
+
+            for tag in j.tags:
+              if tag['Key'] == 'Name':
                 tmp['name'] = tag['Value']
             #print(tmp['name'], tmp['ip'])
-            if 'name' not in tmp: tmp['name'] = ''    
-            if 'dbEndpoint' not in tmp: tmp['dbEndpoint'] = []   
+            if 'name' not in tmp: tmp['name'] = ''
+            if 'dbEndpoint' not in tmp: tmp['dbEndpoint'] = []
             if tmp['dbEndpoint'] != []: self.config['db'].append(tmp['name'])
 
             self.config['names'].append(tmp['name']+':'+tmp['ip'])
@@ -365,7 +365,7 @@ class AwsConsole(Cmd):
             tmp['pip']        = ''
 
         return 0
-   
+
     @tbl
     def _update(self, regions):
       print("Fetching instance data for:")
@@ -429,14 +429,14 @@ update <region>          -- updates the specified region
     def do_list(self, line):
         """
 List instances with ip and db endpoint.
-Usage: 
+Usage:
 list                     -- lists all instances
 list <search>            -- lists all instances that contain the search term
         """
         if self.config['instances'] == []:
-          print("you need to run update") 
-        if line == '':  
-          for i in self.config['instances']:        
+          print("you need to run update")
+        if line == '':
+          for i in self.config['instances']:
                 print('{:<30} {:<20} {:<20}{}'.format(i['name'], i['ip'], i['pip'], i['dbEndpoint']))
         else:
           for i in self.config['instances']:
@@ -451,14 +451,14 @@ list <search>            -- lists all instances that contain the search term
     def do_launched(self, line):
         """
 List instances with ip and db endpoint.
-Usage: 
+Usage:
 launch                     -- lists all instances
 launch <search>            -- lists all instances that contain the search term
         """
         if self.config['instances'] == []:
-            print("you need to run update") 
-        if line == '':  
-          for i in self.config['instances']:        
+            print("you need to run update")
+        if line == '':
+          for i in self.config['instances']:
               print(i['launchTime'], i['name'], i['ip'])
         else:
           for i in self.config['instances']:
@@ -483,8 +483,15 @@ ssh <name> -u <username> -- same as above with the specified username
         user = self._get_param('-u', line, default=self.config['sshUser'])
         inst = self._get_inst(line, split=True)
         pip  = self._get_param('-i', line)
-
         ip = inst['pip'] if pip else inst['ip']
+
+        print(db)
+        if '-db' in line:
+          server = line.split(':')[0]
+          print(server)
+          if server in self.config['db']:
+            tunnel = self.do_db(server, ssh_control=True)
+            db = True
         print("\n###########################")
         print(" Connecting with...")
         print(" USER "+ user)
@@ -495,6 +502,7 @@ ssh <name> -u <username> -- same as above with the specified username
         if '' in sshcall:
           sshcall.remove('')
         error = call(sshcall)
+        if db: tunnel.kill()
         call(['clear'])
 
     @tbl
@@ -511,7 +519,7 @@ config <name> <setting>  -- name is the config option you wish to configure
         """
         config = line.split(' ')[0]
         opt = ', '.join(self.config[config]) if config == 'logs' else self.config[config]
-          
+
         print('\nConfig option is currently set to', opt)
         if input('Do you want to change it? ') == 'y':
           if config == 'logs':
@@ -531,7 +539,7 @@ config <name> <setting>  -- name is the config option you wish to configure
                   json.dump(file, f)
         else:
           pass
-    
+
     @tbl
     def complete_config(self, text, line, begidx, endidx):
         """Auto complete for ssh function"""
@@ -543,18 +551,18 @@ config <name> <setting>  -- name is the config option you wish to configure
 Displays aws instance log of your choice
 usage:
 logs <name>              -- <name> aws instance Name tag
-logs <name> -u <username>-- change default ssh username 
+logs <name> -u <username>-- change default ssh username
         """
         for idx, log in enumerate(self.config['logs']):
           print("[",idx,"]", log)
-        
+
         num = int(input("Select logs to display [ 0 - "+str(len(self.config['logs'])-1)+" ]: "))
-        
+
         command = 'sudo cat ' + self.config['logs'][num]
         print(command)
         user = self._get_param('-u', line, default=self.config['sshUser'])
         inst = self._get_inst(line, split=True)
-        
+
         sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], command]
         if '' in sshcall:
           sshcall.remove('')
@@ -562,7 +570,7 @@ logs <name> -u <username>-- change default ssh username
         p = Popen(sshcall, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         output, err = p.communicate()
         rc = p.returncode
-        
+
         print(output.decode('utf-8'))
 
     @tbl
@@ -576,7 +584,7 @@ logs <name> -u <username>-- change default ssh username
 Displays the docker containers running on the aws instance, select one and it runs docker logs on that container
 usage:
 dockerlogs <name>               -- <name> aws instance Name tag
-dockerlogs <name> -u <username> -- change default ssh username 
+dockerlogs <name> -u <username> -- change default ssh username
         """
         user = self._get_param('-u', line, default=self.config['sshUser'])
         inst = self._get_inst(line, split=True)
@@ -648,7 +656,7 @@ sendfile <name>           -- aws ec2 tag name
 get file from an aws instance
 usage:
 getfile <name>            -- aws ec2 tag name
-                -u <username>     -- change default ssh username 
+                -u <username>     -- change default ssh username
                 -f <path to file> -- location including file name
                 -d <localDir>   -- download directory      (Default: ./)
         """
@@ -667,7 +675,7 @@ getfile <name>            -- aws ec2 tag name
           print("Received file ", file, 'location: ', todir )
           self.do_ls()
 
-    @tbl     
+    @tbl
     def complete_getfile(self, text, line, begidx, endidx):
         """Auto complete for getfile function"""
         return self._complete(text, line, begidx, endidx, self.config['names'])
@@ -686,19 +694,19 @@ console <name>            -- Get EC2 instance console output
 
         stdOut = ec2.get_console_output(InstanceId=inst['id'])
         print(stdOut['Output'])
-    
-    @tbl               
+
+    @tbl
     def complete_console(self, text, line, begidx, endidx):
         """Auto complete for getfile function"""
         return self._complete(text, line, begidx, endidx, self.config['names'])
 
     @tbl
-    def do_db(self, line):
+    def do_db(self, line, ssh_control=False):
         """
 Tunnel to Database
 Usage:
 db <name>                -- creates ssh tunnel to specified instance then starts mysql client
-db <name> -u <username>  -- change default ssh username 
+db <name> -u <username>  -- change default ssh username
 db <name> -c             -- creates ssh tunnel and runs mysql client
 db <name> -p <port>      -- creates ssh tunnel with the specified port
 db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
@@ -729,13 +737,13 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
             env = 'prod'
 
           passwd = self.config['tunnel'][dbLt[0]][dbLt[1]][env]
-        
+
         else:
           passwd = self.config['tunnel'][dbLt[0]]
 
         sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':'+endpoint+':'+str(remoteport), '-N']
         if '' in sshcall:
-          sshcall.remove('')      
+          sshcall.remove('')
         tunnel = Popen(sshcall)
 
         if isinstance(tunnel.pid, int):
@@ -750,9 +758,12 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
             mysql.wait()
             tunnel.kill()
           else:
-            input("Press Enter to close the tunnel")
-            tunnel.kill()
-    
+            if ssh_control:
+              return tunnel
+            else:
+              input("Press Enter to close the tunnel")
+              tunnel.kill()
+
     @tbl
     def complete_db(self, text, line, begidx, endidx):
         """Auto complete for db function"""
@@ -764,23 +775,23 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
 Tunnel to Database
 Usage:
 db <name>                -- creates ssh tunnel to specified instance to map glowroot to localhost
-db <name> -u <username>  -- change default ssh tunnel username 
+db <name> -u <username>  -- change default ssh tunnel username
 db <name> -p <port>      -- creates ssh tunnel with the specified port
         """
         localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port((39000, 39999))
         inst        = self._get_inst(line, split=True)
         user        = self._get_param('-u', line, default=self.config['sshUser'])
-        
+
         sshcall = ['ssh', self.config['sshSwitches'], '-i', self.config['pem'] + inst['key_name'] + '.pem', user+'@'+inst['ip'], '-L', localport+':localhost:4000', '-N']
         if '' in sshcall:
-          sshcall.remove('')      
+          sshcall.remove('')
         tunnel = Popen(sshcall)
         call(['clear'])
         print("glowroot tunnel to ", inst['name'], 'on port ', str(localport))
         print("http://localhost:" + str(localport))
         input("Press Enter to close the tunnel")
         tunnel.kill()
-  
+
     @tbl
     def complete_glowroot(self, text, line, begidx, endidx):
         """Auto complete for db function"""
@@ -803,7 +814,7 @@ flush                    -- removes instance config files from filesystem
                 print('Removed', target)
           else:
                 print(target, "Doesn't exist or can't be deleted")
-   
+
     @tbl
     def save_maybe_exit(self, exit=0):
         """helper function to dump data to disk and maybe exit"""
@@ -815,7 +826,7 @@ flush                    -- removes instance config files from filesystem
         self.postloop()
         if exit:
           sys.exit()
-    
+
     @tbl
     def do_EOF(self, line):
         """Catches <CTL>+d and executes save_maybe_exit"""
@@ -835,7 +846,7 @@ exit
     def cmdloop(self):
         call(['clear'])
         print(self.intro)
-        while True: 
+        while True:
             self.preloop()
             self.intro = ''
             try:
@@ -844,7 +855,7 @@ exit
                 break
             except KeyboardInterrupt:
                 ans = input('Do you wish to exit ash y/n ? ')
-                if ans == 'y': 
+                if ans == 'y':
                   call(['clear'])
                   self.save_maybe_exit(exit=1)
 
