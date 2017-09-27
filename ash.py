@@ -484,7 +484,7 @@ ssh <name> -u <username> -- same as above with the specified username
         inst = self._get_inst(line, split=True)
         pip  = self._get_param('-i', line)
         ip = inst['pip'] if pip else inst['ip']
-
+        db = False
         if '-db' in line:
           server = line.split(':')[0]
           print(server)
