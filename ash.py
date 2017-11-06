@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.2.3'
+        self.version = '1.2.4'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -131,10 +131,10 @@ class AwsConsole(Cmd):
         # Header displayed at start up only
         self.intro  = """
     ___        ______    ____  _   _ ____  _____ ____    _   _ _____ _     ____  _____ ____
-   / \ \      / / ___|  / ___|| | | |  _ \| ____|  _ \  | | | | ____| |   |  _ \| ____|  _ \
+   / \ \      / / ___|  / ___|| | | |  _ \| ____|  _ \  | | | | ____| |   |  _ \| ____|  _ \\
   / _ \ \ /\ / /\___ \  \___ \| | | | |_) |  _| | |_) | | |_| |  _| | |   | |_) |  _| | |_) |
  / ___ \ V  V /  ___) |  ___) | |_| |  __/| |___|  _ <  |  _  | |___| |___|  __/| |___|  _ <
-/_/   \_\_/\_/  |____/  |____/ \___/|_|   |_____|_| \_\ |_| |_|_____|_____|_|   |_____|_| \_\
+/_/   \_\_/\_/  |____/  |____/ \___/|_|   |_____|_| \_\ |_| |_|_____|_____|_|   |_____|_| \_\\
 """
 
         super(AwsConsole, self).__init__()
@@ -773,9 +773,9 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
         """
 Tunnel to Database
 Usage:
-db <name>                -- creates ssh tunnel to specified instance to map glowroot to localhost
-db <name> -u <username>  -- change default ssh tunnel username
-db <name> -p <port>      -- creates ssh tunnel with the specified port
+glowroot <name>                -- creates ssh tunnel to specified instance to map glowroot to localhost
+glowroot <name> -u <username>  -- change default ssh tunnel username
+glowroot <name> -p <port>      -- creates ssh tunnel with the specified port
         """
         localport   = self._get_param('-p', line) if self._get_param('-p', line) else self._get_port((39000, 39999))
         inst        = self._get_inst(line, split=True)
