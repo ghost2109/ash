@@ -771,7 +771,7 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
     @tbl
     def do_glowroot(self, line):
         """
-Tunnel to Database
+Tunnel glowroot to localhost (glowroot is an apm it will need to be running on the host)
 Usage:
 glowroot <name>                -- creates ssh tunnel to specified instance to map glowroot to localhost
 glowroot <name> -u <username>  -- change default ssh tunnel username
