@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.2.5'
+        self.version = '1.2.6'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -154,11 +154,12 @@ class AwsConsole(Cmd):
 
     @tbl
     def do_version(self, line):
-      print(self.version)
+        print(self.version)
 
     @tbl
     def _start_up(self):
-        if '--config' in sys.argv:
+        if not os.path.isfile(self.configLocation+'ash.json'):
+            os.mkdir(self.configLocation)
             data = {
                     "pem" : "~/pem/",
                     "s3Bucket" : "your-bucket-name-here!",
@@ -192,13 +193,12 @@ class AwsConsole(Cmd):
             with open(self.configLocation+'ash.json', 'w') as file:
                 json.dump(data, file)
 
-        else:
-            if not os.path.isfile(self.configLocation+'ash.json'):
-                exit("run ash with --config option")
+        
+            
 
         # load config file into memory from the .ash directory
         with open(self.configLocation + 'ash.json') as data_file:
-          self.config = json.load(data_file)
+            self.config = json.load(data_file)
 
     @tbl
     def preloop(self):
@@ -528,6 +528,10 @@ config <name> <setting>  -- name is the config option you wish to configure
             while item != '':
               item = input('Please enter a new log location(just hit enter to finish): ')
               newOpt.append(item)
+          if config == 'pem':
+            newOpt = input('Please enter the new location: ')
+            if newOpt[-1] != '/':
+              newOpt += '/'
           else:
             newOpt = input('Please enter the new config value: ')
           self.config[config] = newOpt
