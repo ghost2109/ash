@@ -20,7 +20,6 @@ curl https://raw.githubusercontent.com/ghost2109/ash/master/ash.py > ash.py && c
 ```
 ### Command line options  
 <pre>
---config   | creates ash config directory / file ~/.ash/ash.json
 --debug    | turns on error reporting and creates and error log file in the current directory  
 --upgrade  | checks for the latest version and gives you the option to upgrade to a new version  
 </pre>
