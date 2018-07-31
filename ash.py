@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Script: Amazon web services Super Helper (ash)
 # Author: James Phillips
-# Copyright (C) 2016-2017 ash
+# Copyright (C) 2016 - 2018 ash
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ class AwsConsole(Cmd):
     def __init__(self):
 
         # ASH version number
-        self.version = '1.2.6'
+        self.version = '1.2.7'
 
         if '--upgrade' in sys.argv:
             v = check_output(['git', 'ls-remote', '--tags', 'https://github.com/ghost2109/ash'])
@@ -130,12 +130,11 @@ class AwsConsole(Cmd):
 
         # Header displayed at start up only
         self.intro  = """
-    ___        ______    ____  _   _ ____  _____ ____    _   _ _____ _     ____  _____ ____
-   / \ \      / / ___|  / ___|| | | |  _ \| ____|  _ \  | | | | ____| |   |  _ \| ____|  _ \\
-  / _ \ \ /\ / /\___ \  \___ \| | | | |_) |  _| | |_) | | |_| |  _| | |   | |_) |  _| | |_) |
- / ___ \ V  V /  ___) |  ___) | |_| |  __/| |___|  _ <  |  _  | |___| |___|  __/| |___|  _ <
-/_/   \_\_/\_/  |____/  |____/ \___/|_|   |_____|_| \_\ |_| |_|_____|_____|_|   |_____|_| \_\\
-"""
+     _   ___ _  _ ___ 
+   /_\ / __| || |_  )
+  / _ \\__ \ __ |/ / 
+ /_/ \_\___/_||_/___|
+ """
 
         super(AwsConsole, self).__init__()
         # Load instances from config files prompts for update if empty
@@ -736,8 +735,10 @@ db <name> -rp <port>     -- creates ssh tunnel with the specified remote port
             env = 'ea'
           elif 'qa' in dbLt[2]:
             env = 'qa'
-          else:
+          elif 'prod' in dbLt[2]:
             env = 'prod'
+          else:
+            env = dbLt[2]
 
           passwd = self.config['tunnel'][dbLt[0]][dbLt[1]][env]
 
